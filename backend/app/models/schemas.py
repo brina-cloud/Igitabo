@@ -187,3 +187,34 @@ class ListingIn(BaseModel):
     price: float = Field(ge=0)
     location: str = Field(min_length=2, max_length=120)
 
+
+class ListingOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    category: Optional[str] = None
+    quantity: float
+    price: Optional[float] = None
+    location: Optional[str] = None
+    availability: str
+    cooperative_id: int
+    cooperative_name: str
+    is_verified: bool
+
+
+class MatchOut(BaseModel):
+    listing: ListingOut
+    score: int
+    reasons: List[str]
+
+
+class RequestIn(BaseModel):
+    listing_id: int
+    quantity: float = Field(gt=0)
+    message: Optional[str] = Field(default=None, max_length=500)
+
+
+class RespondIn(BaseModel):
+    decision: Literal["accept", "reject"]
+
+
