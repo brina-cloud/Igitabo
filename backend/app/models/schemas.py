@@ -121,3 +121,24 @@ class MaterialRequest(Base):
     @property
     def cooperative_name(self):
         return self.cooperative.name
+
+
+_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+class RegisterIn(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    email: str
+    password: str = Field(min_length=8, max_length=72)
+    role: Literal["cooperative", "manufacturer"]
+    organisation: Optional[str] = Field(default=None, max_length=120)  # company name for manufacturers
+    location: Optional[str] = Field(default=None, max_length=120)
+    phone: Optional[str] = Field(default=None, max_length=30)
+
+    @field_validator("email")
+    @classmethod
+    def check_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not _EMAIL.match(v):
+            raise ValueError("Enter a valid email address")
+        return v
