@@ -159,3 +159,16 @@ class TokenOut(BaseModel):
     token_type: str = "bearer"
     role: str
     name: str
+
+class MeOut(BaseModel):
+    id: int
+    name: str
+    email: str
+    role: str
+    is_verified: Optional[bool] = None
+
+
+class ProfileIn(BaseModel):
+    location: str = Field(min_length=2, max_length=120)
+    phone: str = Field(min_length=6, max_length=30)
+    
