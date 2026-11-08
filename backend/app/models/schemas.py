@@ -171,4 +171,19 @@ class MeOut(BaseModel):
 class ProfileIn(BaseModel):
     location: str = Field(min_length=2, max_length=120)
     phone: str = Field(min_length=6, max_length=30)
-    
+
+class ProfileOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    name: str
+    location: Optional[str] = None
+    phone: Optional[str] = None
+    is_verified: bool
+
+
+class ListingIn(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    category: str = Field(min_length=2, max_length=60)
+    quantity: float = Field(ge=0)
+    price: float = Field(ge=0)
+    location: str = Field(min_length=2, max_length=120)
+
