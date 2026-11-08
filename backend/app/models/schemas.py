@@ -218,3 +218,25 @@ class RespondIn(BaseModel):
     decision: Literal["accept", "reject"]
 
 
+class RequestOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    listing_id: int
+    listing_name: str
+    manufacturer_name: str
+    cooperative_name: str
+    quantity: float
+    message: Optional[str] = None
+    status: str
+    created_at: datetime
+
+
+class CooperativeAdminOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    email: str
+    location: Optional[str] = None
+    phone: Optional[str] = None
+    is_verified: bool
+    registered_at: datetime
