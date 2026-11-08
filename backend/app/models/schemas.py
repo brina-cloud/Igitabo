@@ -142,3 +142,20 @@ class RegisterIn(BaseModel):
         if not _EMAIL.match(v):
             raise ValueError("Enter a valid email address")
         return v
+
+
+class LoginIn(BaseModel):
+    email: str
+    password: str
+
+    @field_validator("email")
+    @classmethod
+    def lower_email(cls, v: str) -> str:
+        return v.strip().lower()
+
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    role: str
+    name: str
