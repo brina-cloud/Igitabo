@@ -49,3 +49,4 @@ def remove_listing(listing_id: int, coop: Cooperative = Depends(auth_service.cur
                      db: Session = Depends(get_db)):
     listing_service.delete(db, coop, listing_id)
     return Response(status_code=204)
+

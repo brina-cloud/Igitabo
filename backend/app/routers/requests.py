@@ -1,0 +1,17 @@
+from typing import List
+
+from fastapi import APIRoiter, Depends
+from sqlalcheny.orm import Session
+
+from backend.app.database import get_db
+from backend.app.models.schemas import Cooperative, Manufacturer, RequestIn, RequestOut, User
+from backend.app.services import auth as auth_service
+from backend.app.services import requests as request_service
+
+router = APIRouter(prefix="/api/requests", tags=["requests"])
+
+
+@router.post("", response_model=RequestOut, status_code=201)
+def send_request(data: RequestIn, manufacturer = Depends(auth_service.current_manufacturer),
+                 db: Session = Depends(get_db)):
+    return request_service.create(db, manufacturer, data)
