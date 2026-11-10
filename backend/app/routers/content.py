@@ -11,4 +11,11 @@ GUIDE = [
     {"title": "Respond (cooperatives)", "steps": ["Open Requests", "Accept or reject each pending request"]},
 ]
 
+@router.get("/options")
+def options():
+    return{"categories": CATEGORIES, "locations": LOCATIONS, "availability": ["Available", "Low", "Out of stock"]}
+
+@router.get("/help")
+def help_guide():
+    return GUIDE
                                                         
