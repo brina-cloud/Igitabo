@@ -27,4 +27,8 @@ def view_request(request_id: int, user: User = Depends(auth_service.require_role
                 db: Session = Depends(get_db)):
     return request_service.view(db, request_id, user)
 
-@
+@router.post("/{request_id}/respond", response_model=RequestOut)
+def respond(request_id: int, data: RespondIn, coop: Cooperative = Depends(auth_service.current_cooperative),
+            db: Session = Depends(get_db)):
+        return request_service.respond(db, coop, request_id, data.decision)
+
