@@ -21,3 +21,10 @@ def send_request(data: RequestIn, manufacturer = Depends(auth_service.current_ma
 def my_requests(user: User = Depends(auth_service.require_role("cooperative", "manufacturer")),
                 db: Session = Depends(get_db)):
     return request_service.mine(db, user)
+
+@router.get("/{request_id}", response_model=RequestOut)
+def view_request(request_id: int, user: User = Depends(auth_service.require_role("cooperative", "manufacturer")),
+                db: Session = Depends(get_db)):
+    return request_service.view(db, request_id, user)
+
+@
