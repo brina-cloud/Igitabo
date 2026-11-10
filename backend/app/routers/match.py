@@ -8,3 +8,8 @@ from backend.app.services import matching
 
 
 router = APIRouter(prefix="/api", tags=["matching"])
+
+@router,get("/match", response_model=List[Matchout])
+def match(material: str = Query(min_length=1), quantity: float = Query(gt=0), location: Optional[str] = None,
+          _: Manufacturer = Depends(auth_sevice.current_manufacturer), db: Session = Depends(get_db)):
+    return matching.match_suppliers(db, material, quantity, location)
