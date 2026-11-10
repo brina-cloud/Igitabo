@@ -15,3 +15,9 @@ router = APIRouter(prefix="/api/requests", tags=["requests"])
 def send_request(data: RequestIn, manufacturer = Depends(auth_service.current_manufacturer),
                  db: Session = Depends(get_db)):
     return request_service.create(db, manufacturer, data)
+
+
+@router.get("/mine", response_model=List[RequestOut])
+def my_requests(user: User = Depends(auth_service.require_role("cooperative", "manufacturer")),
+                db: Session = Depends(get_db)):
+    return request_service.mine(db, user)
