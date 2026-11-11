@@ -17,4 +17,22 @@ def create(db: Session, manufacturer: Manufacturer, data: RequestIn) -> Material
     db.commit()
     db.refresh(request)
     return request
-    
+
+
+def mine(db: Session, user: User):
+    q = db.query(MaterialRequest)
+    if user.role == "cooperative":
+        q = q.filter(MaterialRequest.cooperative_id == user.cooperative.id)
+    else:
+        q = q.filter(MaterialRequest.manufacturer_id == user.manufacturer.id)
+    return q.order_by(MaterialRequest.created_at.desc()).all()
+
+def get_visible(db: Session, user: User, request_id: int) -> MaterialRequest:
+    request = db.get(MaterialRequest, request_id)
+    if not request:
+       raise HTTPException(404, "Request not found")
+    is_sender = user.role == "manufacturer" and request.manufacturer_id == user.manufacturer.id
+    is_receiver = user.role == "cooperative" and request.cooperative_id == user.cooperative.id
+    if not (is_sender or is_receiver):
+        raise HTTPException(403, "You cannot view this request")
+    return request
