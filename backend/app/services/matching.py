@@ -5,10 +5,9 @@ from backend.app.models.schemas import Cooperative, MaterialListing
 def match_suppliers(db: Session, material: str, quantity: float, location: Optional[str] = None, limit: int = 20):
     candidates = (db.query(MaterialListing).join(Cooperative)
                   .filter(Cooperative.is_verified.is_(True), 
-                          MaterialListing.name.ilike9f"%{material.strip()}%"), 
+                          MaterialListing.name.ilike(f"%{material.strip()}%"), 
                           MaterialListing.quantity >= quantity)
                    .all())
-    
     results = []
     for item in candidates:
         score, reasons = 50, [f"Has {item.quantity:g} kg, enough for {quantity:g} kg"]
