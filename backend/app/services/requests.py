@@ -36,3 +36,16 @@ def get_visible(db: Session, user: User, request_id: int) -> MaterialRequest:
     if not (is_sender or is_receiver):
         raise HTTPException(403, "You cannot view this request")
     return request
+
+def respond(db: Session, coop: Cooperative, request_id: int, decision: str) -> MaterialRequest:
+    request = db.get(MaterialRequest, request_id)
+    if not request:
+        raise HTTPException(404, "Request not found")
+    if request.cooperative_id != coop.id:
+        raise HTTPException(403, "This request was sent to another cooperative")
+    if request.status != PENDING:
+        raise HTTPException(409, f"This request was already {request.status.lower()}")
+    request.status = ACCEPTED if decision == "accept" else REJECTED
+    db.commit()
+    db.refresh(request)
+    return request
