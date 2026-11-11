@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlchemy import and_
 from sqlalchemy.orm import Session
-from backend.app.config import setttings
+from backend.app.config import settings
 from backend.app.models.schemas import Cooperative, ListingIn, MaterialListing, ProfileIn
 
 def update_profile(db: Session, coop: Cooperative, data: ProfileIn) -> Cooperative:
@@ -41,9 +41,16 @@ def update(db: Session, coop: Cooperative, listing_id: int, data: ListingIn) -> 
 
 
 def delete(db: Session, coop: Cooperative, listing_id: int) -> None:
-    db.delete(get_owned(db, coop, listting_id))
+    db.delete(get_owned(db, coop, listing_id))
     db.commit()
 
-
-
-
+def availability_clause(value: str):
+    low, q = settings.LOW_STOCK_LIMIT, MaterialListing.quantity
+    key = value.strip().lower()
+    if key == "available":
+        return q > low
+    if key == "low":
+        return and_(q > 0, q <= low)
+    if key in ("out", "out of stock"):
+        return q <= 0
+    raise HTTPException(442, "availability must be Available, Low or Out of stock")
