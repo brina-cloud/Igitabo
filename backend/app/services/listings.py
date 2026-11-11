@@ -23,6 +23,19 @@ def create(db: Session, coop: Cooperative, data: ListingIn) -> MaterialListing:
     db.refresh(listing)
     return listing
 
+def update(db: Session, coop: Cooperative, listing_id: int, data: ListingIn) -> MaterialListing:
+    listing = get_owned(db, coop, listing_id)
+    for field, value in data.model_dump().items():
+        setattr(listing, field, value)
+    db.commit()
+    db.refresh(listing)
+    return listing
+
+
+def delete(db: Session, coop: Cooperative, listing_id: int) -> None:
+    db.delete(get_owned(db, coop, listting_id))
+    db.commit()
+
 
 
 
