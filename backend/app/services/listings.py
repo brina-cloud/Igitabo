@@ -54,3 +54,17 @@ def availability_clause(value: str):
     if key in ("out", "out of stock"):
         return q <= 0
     raise HTTPException(442, "availability must be Available, Low or Out of stock")
+
+def search(db: Session, material: Optional[str] = None, category: Optional[str] = None,
+            location: Optional[str] = None, availability: Optional[str] = None):
+    q = (db.query( MaterialListing).join(Cooperative)
+        .filter(Cooperative.is_verified.is_(True)))
+    if material:
+        q = q.filter(MaterialListing.name.ilike(f"%{material.strip()}%"))
+    if category:
+        q = q.filter( MaterialListing.category.ilike(category.strip()))
+    if location:
+        q = q.filter(MaterialListing.location.ilike(f"%{location.strip()}%"))
+    if availability:
+        q = q.filter(availability_clause(availability))
+    return q.order_by(MaterialListing.name, MaterialListing.price).all()
