@@ -23,6 +23,14 @@ def create(db: Session, coop: Cooperative, data: ListingIn) -> MaterialListing:
     db.refresh(listing)
     return listing
 
+def get_owned(db: Session, coop: Cooperative, listing_id: int) -> MaterialListing:
+    listing = db.get(MaterialListing, listing_id)
+    if not listing:
+        raise HTTPException(404, "Listing not found")
+    if listing.cooperative_id != coop.id:
+        raise HTTPException(403, "This listing belongs to another cooperative")
+    return listing
+
 def update(db: Session, coop: Cooperative, listing_id: int, data: ListingIn) -> MaterialListing:
     listing = get_owned(db, coop, listing_id)
     for field, value in data.model_dump().items():
