@@ -18,4 +18,35 @@
         <li>Administrators verify every cooperative</li>
       </ul>
     </section>
-    
+    <section class="card auth">
+      <div class="tabs">
+        <button class="btn" id="tab-register" type="button">Register</button>
+        <button class="btn btn-outline" id="tab-login" type="button">Log in</button>
+      </div>
+
+      <form id="register-form">
+        <div class="field"><label for="r-role">I am a</label>
+          <select id="r-role"><option value="cooperative">Cooperative</option><option value="manufacturer">Manufacturer</option></select></div>
+        <div class="field"><label for="r-name">Name</label><input id="r-name" required minlength="2" autocomplete="name"></div>
+        <div class="field" id="org-row" hidden><label for="r-org">Company name</label><input id="r-org"></div>
+        <div class="field"><label for="r-email">Email</label><input id="r-email" type="email" required autocomplete="email"></div>
+        <div class="field"><label for="r-password">Password</label><input id="r-password" type="password" required minlength="8" autocomplete="new-password">
+          <p class="note">At least 8 characters.</p></div>
+        <div class="field"><label for="r-location">Location (district)</label><input id="r-location" list="locations"></div>
+        <div class="field"><label for="r-phone">Phone</label><input id="r-phone" type="tel" autocomplete="tel"></div>
+        <button class="btn btn-wide" type="submit">Create account</button>
+      </form>
+
+      <form id="login-form" hidden>
+        <div class="field"><label for="l-email">Email</label><input id="l-email" type="email" required autocomplete="email"></div>
+        <div class="field"><label for="l-password">Password</label><input id="l-password" type="password" required autocomplete="current-password"></div>
+        <button class="btn btn-wide" type="submit">Log in</button>
+      </form>
+
+      <p id="msg" class="error" role="alert"></p>
+      <p class="note">Administrator accounts are created by the developer.</p>
+      <datalist id="locations"></datalist>
+    </section>
+  </main>
+
+</html>
