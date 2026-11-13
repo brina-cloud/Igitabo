@@ -24,3 +24,14 @@ if (store.token && store.user) location.href = PAGES[store.user.role];
       e.preventDefault();
       authenticate("/auth/login", { email: $("l-email").value, password: $("l-password").value });
     });
+    $("register-form").addEventListener("submit", e => {
+      e.preventDefault();
+      authenticate("/auth/register", {
+        role: $("r-role").value, name: $("r-name").value, email: $("r-email").value,
+        password: $("r-password").value, organisation: $("r-org").value || null,
+        location: $("r-location").value || null, phone: $("r-phone").value || null,
+      });
+    });
+    api("/content/options", { auth: false }).then(o => {
+      $("locations").innerHTML = o.locations.map(l => `<option value="${esc(l)}">`).join("");
+    }).catch(() => {});
