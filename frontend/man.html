@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Igitabo: manufacturer</title>
+  <link rel="stylesheet" href="styles/index.css">
+</head>
+<body>
+  <header class="nav">
+    <strong class="brand">Igitabo</strong>
+    <nav aria-label="Sections"><a href="#search">Search</a><a href="#match">Match suppliers</a><a href="#requests">My requests</a></nav>
+    <div class="who"><span data-user></span><button class="btn btn-outline btn-small" data-logout type="button">Log out</button></div>
+  </header>
+  <main>
+    <section class="card" id="search">
+      <h2>Find suppliers</h2>
+      <form id="search-form" class="grid-form">
+        <div><label for="s-material">Material</label><input id="s-material" placeholder="e.g. Maize"></div>
+        <div><label for="s-category">Category</label><select id="s-category"></select></div>
+        <div><label for="s-location">Location</label><input id="s-location" list="locations" placeholder="Any"></div>
+        <div><label for="s-availability">Availability</label>
+          <select id="s-availability"><option value="">Any</option><option>Available</option><option>Low</option></select></div>
+        <button class="btn" type="submit">Search</button>
+      </form>
+      <div id="search-results" class="cards"></div>
+    </section>
+
+    <section class="card" id="match">
+      <h2>Match suppliers to my need</h2>
+      <p class="note">Enter what you need. Igitabo lists verified cooperatives that have enough, best match first.</p>
+      <form id="match-form" class="grid-form">
+        <div><label for="m-material">Material</label><input id="m-material" required></div>
+        <div><label for="m-quantity">Quantity needed (kg)</label><input id="m-quantity" type="number" min="1" step="any" required></div>
+        <div><label for="m-location">Preferred location</label><input id="m-location" list="locations"></div>
+        <button class="btn" type="submit">Find matches</button>
+      </form>
+      <div id="match-results" class="cards"></div>
+    </section>
+
+    <section class="card" id="requests">
+      <h2>My requests</h2>
+      <div id="request-list"></div>
+    </section>
+    <datalist id="locations"></datalist>
+  </main>
+
+  <dialog id="request-dialog" aria-labelledby="d-title">
+    <form id="request-form">
+      <h3 id="d-title">Send request</h3>
+      <p id="d-info" class="note"></p>
+      <input type="hidden" id="d-listing">
+      <div class="field"><label for="d-quantity">Quantity (kg)</label><input id="d-quantity" type="number" min="1" step="any" required></div>
+      <div class="field"><label for="d-message">Message (optional)</label><textarea id="d-message" rows="3" maxlength="500"></textarea></div>
+      <div class="actions"><button class="btn" type="submit">Send request</button><button class="btn btn-outline" type="button" id="d-cancel">Cancel</button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="scripts/common.js"></script>
+  <script src="scripts/man.js"></script>
+</body>
+</html>
