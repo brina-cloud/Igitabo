@@ -42,7 +42,7 @@ def search_listings(material: Optional[str] = None,
                     availability: Optional[str] = None,
                     _: User = Depends(auth_service.current_user),
                     db: Session = Depends(get_db)):
-    return listing_service.search(db, material, category, location, availability)\
+    return listing_service.search(db, material, category, location, availability)
 
 @router.delete("/listings/{listing_id}", status_code=204)
 def remove_listing(listing_id: int, coop: Cooperative = Depends(auth_service.current_cooperative),

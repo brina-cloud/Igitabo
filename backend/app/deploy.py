@@ -18,4 +18,19 @@ def create_app() -> FastAPI:
         if settings.SEED_DEMO:
             seed_demo_data(db)
 
+    app = FastAPI(title="Igitabo")
+    app.include_router(auth.router)
+    app.include_router(content.router)
+    app.include_router(listings.router)
+    app.include_router(match.router)
+    app.include_router(requests_router.router)
+    app.include_router(admin.router)
+
+    frontend_dir = settings.PROJECT_DIR / "frontend"
+    app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+    return app
+
+
+app = create_app()
+
 

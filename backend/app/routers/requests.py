@@ -1,7 +1,7 @@
 from typing import List
 
-from fastapi import APIRoiter, Depends
-from sqlalcheny.orm import Session
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
 from backend.app.models.schemas import Cooperative, Manufacturer, RequestIn, RequestOut, RespondIn, User
@@ -25,7 +25,7 @@ def my_requests(user: User = Depends(auth_service.require_role("cooperative", "m
 @router.get("/{request_id}", response_model=RequestOut)
 def view_request(request_id: int, user: User = Depends(auth_service.require_role("cooperative", "manufacturer")),
                 db: Session = Depends(get_db)):
-    return request_service.get_visible(db, request_id, user)
+    return request_service.get_visible(db, user, request_id)
 
 @router.post("/{request_id}/respond", response_model=RequestOut)
 def respond(request_id: int, data: RespondIn, coop: Cooperative = Depends(auth_service.current_cooperative),

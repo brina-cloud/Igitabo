@@ -1,6 +1,6 @@
 
-from sqalchemy import create_engine
-from sqalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 from backend.app.config import settings
 _connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
@@ -12,7 +12,7 @@ Base = declarative_base()
 def get_db():
     db = SessionLocal()
     try:
-        yeild db
+        yield db
     finally:
         db.close()
 

@@ -14,7 +14,7 @@ def match_suppliers(db: Session, material: str, quantity: float, location: Optio
         if location and item.location and location.strip().lower() in item.location.lower():
             score += 30
             reasons.append("Same location")
-        if item.availability == "Availability":
+        if item.availability == "Available":
             score += 20
             reasons.append("Well stocked")
         results.append({"listing": item, "score": score, "reasons": reasons})

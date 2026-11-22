@@ -1,13 +1,14 @@
 """for the cooperative profile, material listings and search."""
 from typing import Optional
 from fastapi import HTTPException
-from sqlchemy import and_
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from backend.app.config import settings
 from backend.app.models.schemas import Cooperative, ListingIn, MaterialListing, ProfileIn
 
 def update_profile(db: Session, coop: Cooperative, data: ProfileIn) -> Cooperative:
-    coop.location, coop.phone = data.location.strip()
+    coop.location = data.location.strip()
+    coop.phone = data.phone.strip()
     db.commit()
     db.refresh(coop)
     return coop
@@ -53,7 +54,7 @@ def availability_clause(value: str):
         return and_(q > 0, q <= low)
     if key in ("out", "out of stock"):
         return q <= 0
-    raise HTTPException(442, "availability must be Available, Low or Out of stock")
+    raise HTTPException(400, "availability must be Available, Low or Out of stock")
 
 def search(db: Session, material: Optional[str] = None, category: Optional[str] = None,
             location: Optional[str] = None, availability: Optional[str] = None):
