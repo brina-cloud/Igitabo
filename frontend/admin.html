@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Igitabo: administrator</title>
+  <link rel="stylesheet" href="styles/index.css">
+</head>
+<body>
+  <header class="nav">
+    <strong class="brand">Igitabo</strong>
+    <nav aria-label="Sections"><a href="#cooperatives">Cooperatives</a></nav>
+    <div class="who"><span data-user></span><button class="btn btn-outline btn-small" data-logout type="button">Log out</button></div>
+  </header>
+  <main>
+    <section class="card" id="cooperatives">
+      <h2>Verify cooperatives</h2>
+      <p class="note">Review each cooperative’s details before verifying it. Listings from unverified cooperatives stay hidden from manufacturers.</p>
+      <div class="field" style="max-width:240px"><label for="filter">Show</label>
+        <select id="filter"><option value="pending">Pending</option><option value="verified">Verified</option><option value="all">All</option></select></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cooperative</th><th>Email</th><th>Location</th><th>Phone</th><th>Registered</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p class="empty" id="empty" hidden>No cooperatives to show.</p>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="scripts/common.js"></script>
+  <script src="scripts/admin.js"></script>
+</body>
