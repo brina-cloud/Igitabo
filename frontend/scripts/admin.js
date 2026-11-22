@@ -11,4 +11,15 @@ async function load() {
       <td>${c.is_verified ? "" : `<button class="btn btn-small" data-verify="${c.id}" type="button">Verify</button>`}</td>
     </tr>`).join("");
 }
+$("filter").addEventListener("change", () => run(load));
+$("rows").addEventListener("click", e => {
+  const btn = e.target.closest("[data-verify]");
+  if (!btn) return;
+  run(async () => {
+    await api(`/admin/cooperatives/${btn.dataset.verify}/verify`, { method: "POST" });
+    toast("Cooperative verified");
+    await load();
+  });
+});
 
+if (user) run(load);
