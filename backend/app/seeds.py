@@ -43,3 +43,25 @@ def seed_admin(db: Session) -> None:
     db.add(User(name="Administrator", email=settings.ADMIN_EMAIL.lower(),
                 password_hash=hash_password(settings.ADMIN_PASSWORD), role="administrator"))
     db.commit()
+
+
+def seed_demo_data(db: Session) -> None:
+    """5 cooperatives, 3 manufacturers and 20 listings"""
+    if db.query(Cooperative).first():
+        return
+    coops = []
+    for i, (name, location, verified) in enumerate(COOPERATIVES, start=1):
+        user = User(name=name, email=_email("coop", i), password_hash=hash_password(DEMO_PASSWORD), role="cooperative")
+        coop = Cooperative(user=user, location=location, phone="07x xxx xxx", is_verified=verified,
+                           verified_at=datetime.utcnow() if verified else None)
+        db.add(coop)
+        coops.append(coop)
+    for i, (name, industry, location) in enumerate(MANUFACTURERS, start=1):
+        user = User(name=name, email=_email("maker", i), password_hash=hash_password(DEMO_PASSWORD), role="manufacturer")
+        db.add(Manufacturer(user=user, company_name=name, industry=industry, location=location, phone="07x xxx xxx"))
+    db.flush()
+    for idx, material, category, quantity, price in LISTINGS:
+        coop = coops[idx]
+        db.add(MaterialListing(cooperative_id=coop.id, name=material, category=category,
+                               quantity=quantity, price=price, location=coop.location))
+    db.commit()
