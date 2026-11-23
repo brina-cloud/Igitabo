@@ -11,6 +11,7 @@ from backend.app.routers import requests as requests_router
 from backend.app.seeds import seed_admin, seed_demo_data
 
 
+
 def create_app() -> FastAPI:
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
@@ -18,19 +19,17 @@ def create_app() -> FastAPI:
         if settings.SEED_DEMO:
             seed_demo_data(db)
 
-    app = FastAPI(title="Igitabo")
-    app.include_router(auth.router)
-    app.include_router(content.router)
-    app.include_router(listings.router)
-    app.include_router(match.router)
+    app = FastAPI(title="Igitabo API", version="1.0")
+    for module in (auth, listings, match, admin, content):
+        app.include_router(module.router)
     app.include_router(requests_router.router)
-    app.include_router(admin.router)
 
-    frontend_dir = settings.PROJECT_DIR / "frontend"
-    app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+    @app.get("/api/health", tags=["system"])
+    def health():
+        return {"status": "ok"}
+
+    app.mount("/", StaticFiles(directory=settings.FRONTEND_DIR, html=True), name="frontend")
     return app
 
 
 app = create_app()
-
-
