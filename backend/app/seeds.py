@@ -31,3 +31,15 @@ LISTINGS = [
     (4, "Maize", "Cereal", 300, 440), (4, "Beans", "Legume", 200, 790),
     (4, "Coffee cherries", "Coffee", 150, 1250), (4, "Cassava flour", "Flour", 450, 590),
 ]
+
+
+def _email(prefix: str, n: int) -> str:
+    return f"{prefix}{n}@igitabo.demo"
+
+
+def seed_admin(db: Session) -> None:
+    if db.query(User).filter(User.role == "administrator").first():
+        return
+    db.add(User(name="Administrator", email=settings.ADMIN_EMAIL.lower(),
+                password_hash=hash_password(settings.ADMIN_PASSWORD), role="administrator"))
+    db.commit()
