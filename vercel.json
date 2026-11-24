@@ -4,7 +4,7 @@
     { "src": "frontend/**", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.py" },
+    { "src": "/api/(.*)", "dest": "/backend/deploy.py" },
     {"src": "/", "dest": "/frontend/index.html"},
     { "src": "/(.*)", "dest": "/frontend/$1" }
   ]
