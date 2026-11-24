@@ -6,7 +6,7 @@ _PROJECT_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(_PROJECT_DIR / ".env")
 
 def _database_url() -> str:
-    url = os.environ.get("DATABASE_URL", "sqlite:///./igitabo.db")
+    url = os.environ.get("DATABASE_NEW_URL", "sqlite:///./igitabo.db")
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)
     if url.startswith("postgresql://") and "+psycopg" not in url:
@@ -15,7 +15,7 @@ def _database_url() -> str:
 
 
 class Settings:
-    DATABASE_URL = _database_url()
+    DATABASE_NEW_URL = _database_url()
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-secret-change-me-before-deploying")
     TOKEN_HOURS = int(os.environ.get("TOKEN_HOURS", "8"))
     LOW_STOCK_LIMIT = float(os.environ.get("LOW_STOCK_LIMIT", "100"))
@@ -26,7 +26,7 @@ class Settings:
     FRONTEND_DIR = _PROJECT_DIR / "frontend"
 settings = Settings()
 if os.environ.get("VERCEL"):
-    if not os.environ.get("DATABASE_URL"):
+    if not os.environ.get("DATABASE_NEW_URL"):
         raise RuntimeError("Set DATABASE_URL to the Neon PostgreSQL connection string before deploying.")
     if settings.SECRET_KEY.startswith("dev-only"):
         raise RuntimeError("Set SECRET_KEY in the environment before deploying.")
