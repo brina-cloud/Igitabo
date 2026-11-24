@@ -160,4 +160,99 @@
     "Cooperative not found": "Koperative ntiyabonetse"
   };
 
-  
+  const SKIP = new Set(["SCRIPT", "STYLE", "TEXTAREA", "NOSCRIPT"]);
+  const textSeen = new WeakMap();
+  const attrSeen = new WeakMap();
+  let lang = "en";
+  try { lang = localStorage.getItem("igitabo_lang") === "rw" ? "rw" : "en"; } catch (e) {}
+
+  const tr = key => (lang === "rw" && Object.prototype.hasOwnProperty.call(RW, key)) ? RW[key] : key;
+  const t = (key, ...args) => tr(key).replace(/\{(\d+)\}/g, (m, i) => (args[i] !== undefined ? args[i] : m));
+
+  function trNode(node) {
+    const parent = node.parentNode;
+    if (!parent || SKIP.has(parent.nodeName)) return;
+    const rec = textSeen.get(node);
+    const cur = node.nodeValue;
+    const src = rec && cur === rec.out ? rec.en : cur;
+    const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(src);
+    if (!m[2]) return;
+    const out = m[1] + tr(m[2]) + m[3];
+    if (out !== cur) node.nodeValue = out;
+    textSeen.set(node, { en: src, out });
+    if (parent.nodeName === "OPTION" && !parent.hasAttribute("value")) parent.setAttribute("value", m[2]);
+  }
+
+  function trAttr(el) {
+    const cur = el.getAttribute("placeholder");
+    if (cur === null) return;
+    const rec = attrSeen.get(el);
+    const src = rec && cur === rec.out ? rec.en : cur;
+    const out = tr(src);
+    if (out !== cur) el.setAttribute("placeholder", out);
+    attrSeen.set(el, { en: src, out });
+  }
+
+  function translateTree(root) {
+    if (!root) return;
+    if (root.nodeType === 3) { trNode(root); return; }
+    if (root.nodeType !== 1) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let n;
+    while ((n = walker.nextNode())) nodes.push(n);
+    nodes.forEach(trNode);
+    if (root.hasAttribute("placeholder")) trAttr(root);
+    root.querySelectorAll("[placeholder]").forEach(trAttr);
+  }
+
+  const titleEn = document.title;
+  const trTitle = () => { document.title = tr(titleEn); };
+
+  function syncToggle() {
+    document.querySelectorAll(".lang button").forEach(b =>
+      b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  }
+
+  function setLang(code) {
+    lang = code === "rw" ? "rw" : "en";
+    try { localStorage.setItem("igitabo_lang", lang); } catch (e) {}
+    document.documentElement.lang = lang;
+    syncToggle();
+    trTitle();
+    translateTree(document.body);
+    if (typeof window.onIgitaboLang === "function") window.onIgitaboLang(lang);
+  }
+
+  function mountToggle() {
+    const host = document.querySelector(".nav .who") || document.querySelector(".nav");
+    if (!host || host.querySelector(".lang")) return;
+    const box = document.createElement("div");
+    box.className = "lang";
+    box.setAttribute("role", "group");
+    box.setAttribute("aria-label", "Language");
+    [["en", "EN", "English"], ["rw", "RW", "Kinyarwanda"]].forEach(([code, label, name]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = label;
+      b.title = name;
+      b.dataset.lang = code;
+      b.addEventListener("click", () => setLang(code));
+      box.appendChild(b);
+    });
+    host.insertBefore(box, host.firstChild);
+    syncToggle();
+  }
+
+  document.documentElement.lang = lang;
+  mountToggle();
+  trTitle();
+  translateTree(document.body);
+  new MutationObserver(records => {
+    records.forEach(r => r.addedNodes.forEach(translateTree));
+  }).observe(document.body, { childList: true, subtree: true });
+
+  window.t = t;
+  window.getLang = () => lang;
+  window.setLang = setLang;
+})();
