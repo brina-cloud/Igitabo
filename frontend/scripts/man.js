@@ -5,7 +5,12 @@ async function init() {
   const options = await api("/content/options", { auth: false });
   $("s-category").innerHTML = '<option value="">Any</option>' + options.categories.map(c => `<option>${esc(c)}</option>`).join("");
   $("locations").innerHTML = options.locations.map(l => `<option value="${esc(l)}">`).join("");
-  await Promise.all([searchListings(), loadRequests()]);
+  await Promise.all([loadProfile(), searchListings(), loadRequests()]);
+}
+
+async function loadProfile() {
+  const me = await api("/auth/me");
+  renderProfileHead(me, "Manufacturer");
 }
 
 
@@ -72,6 +77,9 @@ $("request-form").addEventListener("submit", e => {
 
 async function loadRequests() {
   const requests = await api("/requests/mine");
+  setStat("st-total", requests.length);
+  setStat("st-pending", requests.filter(r => r.status === "Pending").length);
+  setStat("st-accepted", requests.filter(r => r.status === "Accepted").length);
   $("request-list").innerHTML = requests.length ? requests.map(r => `
     <div class="item" style="margin-bottom:12px">
       <div class="top"><b>${esc(r.listing_name)}</b>${chip(r.status)}</div>

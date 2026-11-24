@@ -20,12 +20,21 @@ async function init() {
 }
 
 async function loadProfile() {
-  const p = await api(ROUTES.profile);
+  const [p, me] = await Promise.all([
+    api(ROUTES.profile),
+    api("/auth/me"),
+  ]);
+  renderProfileHead(me, "Cooperative");
   $("p-location").value = p.location || "";
   $("p-phone").value = p.phone || "";
   $("verified").innerHTML = p.is_verified
     ? chip("Verified") + " Your listings are visible to manufacturers."
     : chip("Pending") + " An administrator must verify you before manufacturers can see your listings.";
+  $("verify-note").textContent = p.is_verified
+    ? "Your listings are visible to manufacturers."
+    : "An administrator must verify you before manufacturers can see your listings.";
+  $("verify-note").className = p.is_verified ? "banner banner-ok" : "banner banner-warn";
+  $("complete-note").hidden = Boolean(p.location && p.phone);
 }
 
 $("profile-form").addEventListener("submit", e => {
@@ -39,6 +48,7 @@ $("profile-form").addEventListener("submit", e => {
 
 async function loadListings() {
   myListings = await api(ROUTES.mine);
+  setStat("st-listings", myListings.length);
   $("listing-empty").hidden = myListings.length > 0;
   $("listing-rows").innerHTML = myListings.map(l => `
     <tr>
@@ -103,6 +113,8 @@ $("listing-form").addEventListener("submit", e => {
 
 async function loadRequests() {
   const requests = await api(ROUTES.incoming);
+  setStat("st-pending", requests.filter(r => r.status === "Pending").length);
+  setStat("st-accepted", requests.filter(r => r.status === "Accepted").length);
   $("request-list").innerHTML = requests.length ? requests.map(r => `
     <div class="item" style="margin-bottom:12px">
       <div class="top"><b>${esc(r.listing_name)}</b>${chip(r.status)}</div>
