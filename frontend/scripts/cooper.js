@@ -1,90 +1,126 @@
-const API = "/api";
-const PAGES = { cooperative: "cooper.html", manufacturer: "man.html", administrator: "admin.html" };
+const user = requireRole("cooperative");
+const $ = id => document.getElementById(id);
 
-const store = {
-  get token() { return localStorage.getItem("igitabo_token"); },
-  get user() {
-    try { return JSON.parse(localStorage.getItem("igitabo_user") || "null"); } catch { return null; }
-  },
-  set(data) {
-    localStorage.setItem("igitabo_token", data.access_token);
-    localStorage.setItem("igitabo_user", JSON.stringify({ role: data.role, name: data.name }));
-  },
-  clear() {
-    localStorage.removeItem("igitabo_token");
-    localStorage.removeItem("igitabo_user");
-  },
+
+const ROUTES = {
+  profile: "/cooperative/profile",      
+  mine: "/listings/mine",            
+  listings: "/listings",             
+  incoming: "/requests/mine",    
+  respond: id => `/requests/${id}/respond`, 
 };
 
-function esc(v) {
-  return String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let myListings = [];
+
+async function init() {
+  const options = await api("/content/options", { auth: false });
+  $("l-category").innerHTML = options.categories.map(c => `<option>${esc(c)}</option>`).join("");
+  $("locations").innerHTML = options.locations.map(l => `<option value="${esc(l)}">`).join("");
+  await Promise.all([loadProfile(), loadListings(), loadRequests()]);
 }
 
-function errorText(data) {
-  if (!data) return "Something went wrong.";
-  if (typeof data.detail === "string") return data.detail;
-  if (Array.isArray(data.detail)) {
-    return data.detail.map(e => `${(e.loc || []).slice(1).join(" ")}: ${e.msg}`).join("; ");
+async function loadProfile() {
+  const p = await api(ROUTES.profile);
+  $("p-location").value = p.location || "";
+  $("p-phone").value = p.phone || "";
+  $("verified").innerHTML = p.is_verified
+    ? chip("Verified") + " Your listings are visible to manufacturers."
+    : chip("Pending") + " An administrator must verify you before manufacturers can see your listings.";
+}
+
+$("profile-form").addEventListener("submit", e => {
+  e.preventDefault();
+  run(async () => {
+    await api(ROUTES.profile, { method: "PUT", body: { location: $("p-location").value.trim(), phone: $("p-phone").value.trim() } });
+    toast("Profile saved");
+    await loadProfile();
+  });
+});
+
+async function loadListings() {
+  myListings = await api(ROUTES.mine);
+  $("listing-empty").hidden = myListings.length > 0;
+  $("listing-rows").innerHTML = myListings.map(l => `
+    <tr>
+      <td>${esc(l.name)}</td><td>${esc(l.category || "")}</td><td>${num(l.quantity)} kg</td>
+      <td>${money(l.price)}</td><td>${chip(l.availability)}</td>
+      <td><button class="btn btn-small btn-outline" data-edit="${l.id}" type="button">Edit</button>
+          <button class="btn btn-small btn-outline" data-delete="${l.id}" type="button">Delete</button></td>
+    </tr>`).join("");
+}
+
+function resetForm() {
+  $("listing-form").reset();
+  $("l-id").value = "";
+  $("form-title").textContent = "Add listing";
+  $("l-cancel").hidden = true;
+}
+
+$("l-cancel").addEventListener("click", resetForm);
+
+$("listing-rows").addEventListener("click", e => {
+  const edit = e.target.closest("[data-edit]");
+  const del = e.target.closest("[data-delete]");
+  if (edit) {
+    const l = myListings.find(x => x.id === Number(edit.dataset.edit));
+    if (!l) return;
+    $("l-id").value = l.id;
+    $("l-name").value = l.name;
+    $("l-category").value = l.category || "";
+    $("l-quantity").value = l.quantity;
+    $("l-price").value = l.price ?? "";
+    $("l-location").value = l.location || "";
+    $("form-title").textContent = "Edit listing";
+    $("l-cancel").hidden = false;
+    $("listing-form").scrollIntoView({ behavior: "smooth" });
   }
-  return "Something went wrong.";
-}
-
-async function api(path, opts = {}) {
-  const headers = { "Content-Type": "application/json" };
-  if (opts.auth !== false && store.token) headers.Authorization = "Bearer " + store.token;
-  let res;
-  try {
-    res = await fetch(API + path, {
-      method: opts.method || "GET",
-      headers,
-      body: opts.body ? JSON.stringify(opts.body) : undefined,
+  if (del && confirm("Delete this listing?")) {
+    run(async () => {
+      await api(`${ROUTES.listings}/${del.dataset.delete}`, { method: "DELETE" });
+      toast("Listing deleted");
+      await loadListings();
     });
-  } catch {
-    throw new Error("Cannot reach the server. Check your connection.");
   }
-  if (res.status === 204) return null;
-  const data = await res.json().catch(() => null);
-  if (!res.ok) {
-    if (res.status === 401 && opts.auth !== false) logout();
-    throw new Error(errorText(data));
-  }
-  return data;
+});
+
+$("listing-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const id = $("l-id").value;
+  const body = {
+    name: $("l-name").value.trim(),
+    category: $("l-category").value,
+    quantity: parseFloat($("l-quantity").value),
+    price: parseFloat($("l-price").value),
+    location: $("l-location").value.trim(),
+  };
+  run(async () => {
+    await api(id ? `${ROUTES.listings}/${id}` : ROUTES.listings, { method: id ? "PUT" : "POST", body });
+    toast(id ? "Listing updated" : "Listing added");
+    resetForm();
+    await loadListings();
+  });
+});
+
+async function loadRequests() {
+  const requests = await api(ROUTES.incoming);
+  $("request-list").innerHTML = requests.length ? requests.map(r => `
+    <div class="item" style="margin-bottom:12px">
+      <div class="top"><b>${esc(r.listing_name)}</b>${chip(r.status)}</div>
+      <p>${esc(r.manufacturer_name)} wants ${num(r.quantity)} kg · ${fmtDate(r.created_at)}${r.message ? `<br>“${esc(r.message)}”` : ""}</p>
+      ${r.status === "Pending" ? `<div class="actions">
+        <button class="btn btn-small" data-decision="accept" data-id="${r.id}" type="button">Accept</button>
+        <button class="btn btn-small btn-outline" data-decision="reject" data-id="${r.id}" type="button">Reject</button></div>` : ""}
+    </div>`).join("") : '<p class="empty">No requests yet.</p>';
 }
 
-function logout() {
-  store.clear();
-  location.href = "index.html";
-}
+$("request-list").addEventListener("click", e => {
+  const btn = e.target.closest("[data-decision]");
+  if (!btn) return;
+  run(async () => {
+    await api(ROUTES.respond(btn.dataset.id), { method: "POST", body: { decision: btn.dataset.decision } });
+    toast("Request " + (btn.dataset.decision === "accept" ? "accepted" : "rejected"));
+    await Promise.all([loadRequests(), loadListings()]);
+  });
+});
 
-
-function requireRole(role) {
-  const user = store.user;
-  if (!store.token || !user || user.role !== role) {
-    location.href = "index.html";
-    return null;
-  }
-  document.querySelectorAll("[data-user]").forEach(el => (el.textContent = user.name));
-  document.querySelectorAll("[data-logout]").forEach(el => el.addEventListener("click", logout));
-  return user;
-}
-
-let toastTimer;
-function toast(message, kind = "ok") {
-  const el = document.getElementById("toast");
-  if (!el) return;
-  el.textContent = message;
-  el.className = "toast show" + (kind === "bad" ? " bad" : "");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (el.className = "toast"), 3500);
-}
-
-// Run an action and show any error as a message instead of failing silently.
-async function run(action) {
-  try { return await action(); } catch (err) { toast(err.message, "bad"); }
-}
-
-const STATUS_CLASS = { Available: "ok", Accepted: "ok", Verified: "ok", Low: "warn", Pending: "warn", "Out of stock": "bad", Rejected: "bad" };
-const chip = text => `<span class="chip ${STATUS_CLASS[text] || "muted"}">${esc(text)}</span>`;
-const num = n => Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
-const money = n => (n == null ? "" : "RWF " + num(n));
-const fmtDate = s => new Date(s.endsWith("Z") ? s : s + "Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+if (user) run(init);
