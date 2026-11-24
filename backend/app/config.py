@@ -19,7 +19,9 @@ class Settings:
     LOW_STOCK_LIMIT = float(os.environ.get("LOW_STOCK_LIMIT", "100"))
     ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@igitabo.local")
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Changeme")
-    SEED_DEMO = os.environ.get("SEED_DEMO", "1") == "1"
+    SEED_DEMO = os.environ.get("SEED_DEMO", "0") == "1"
     PROJECT_DIR = Path(__file__).resolve().parents[2]
     FRONTEND_DIR = PROJECT_DIR
 settings = Settings()
+if os.environ.get("VERCEL") and settings.SECRET_KEY.startswith("dev-only"):
+    raise RuntimeError("Set SECRET_KEY in the environment before deploying.")

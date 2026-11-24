@@ -143,6 +143,13 @@ class RegisterIn(BaseModel):
             raise ValueError("Enter a valid email address")
         return v
 
+    @field_validator("password")
+    @classmethod
+    def check_password(cls, v: str) -> str:
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password is too long (max 72 bytes)")
+        return v
+
 
 class LoginIn(BaseModel):
     email: str
