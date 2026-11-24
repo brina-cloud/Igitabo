@@ -1,37 +1,90 @@
-if (store.token && store.user) location.href = PAGES[store.user.role];
-    const $ = id => document.getElementById(id);
+const API = "/api";
+const PAGES = { cooperative: "cooper.html", manufacturer: "man.html", administrator: "admin.html" };
 
-    function show(which) {
-      $("register-form").hidden = which !== "register";
-      $("login-form").hidden = which !== "login";
-      $("tab-register").className = "btn" + (which === "register" ? "" : " btn-outline");
-      $("tab-login").className = "btn" + (which === "login" ? "" : " btn-outline");
-      $("msg").textContent = "";
-    }
-    $("tab-register").onclick = () => show("register");
-    $("tab-login").onclick = () => show("login");
-    $("r-role").onchange = () => { $("org-row").hidden = $("r-role").value !== "manufacturer"; };
+const store = {
+  get token() { return localStorage.getItem("igitabo_token"); },
+  get user() {
+    try { return JSON.parse(localStorage.getItem("igitabo_user") || "null"); } catch { return null; }
+  },
+  set(data) {
+    localStorage.setItem("igitabo_token", data.access_token);
+    localStorage.setItem("igitabo_user", JSON.stringify({ role: data.role, name: data.name }));
+  },
+  clear() {
+    localStorage.removeItem("igitabo_token");
+    localStorage.removeItem("igitabo_user");
+  },
+};
 
-    async function authenticate(path, body) {
-      $("msg").textContent = "";
-      try {
-        const data = await api(path, { method: "POST", body, auth: false });
-        store.set(data);
-        location.href = PAGES[data.role];
-      } catch (err) { $("msg").textContent = err.message; }
-    }
-    $("login-form").addEventListener("submit", e => {
-      e.preventDefault();
-      authenticate("/auth/login", { email: $("l-email").value, password: $("l-password").value });
+function esc(v) {
+  return String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function errorText(data) {
+  if (!data) return "Something went wrong.";
+  if (typeof data.detail === "string") return data.detail;
+  if (Array.isArray(data.detail)) {
+    return data.detail.map(e => `${(e.loc || []).slice(1).join(" ")}: ${e.msg}`).join("; ");
+  }
+  return "Something went wrong.";
+}
+
+async function api(path, opts = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (opts.auth !== false && store.token) headers.Authorization = "Bearer " + store.token;
+  let res;
+  try {
+    res = await fetch(API + path, {
+      method: opts.method || "GET",
+      headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
-    $("register-form").addEventListener("submit", e => {
-      e.preventDefault();
-      authenticate("/auth/register", {
-        role: $("r-role").value, name: $("r-name").value, email: $("r-email").value,
-        password: $("r-password").value, organisation: $("r-org").value || null,
-        location: $("r-location").value || null, phone: $("r-phone").value || null,
-      });
-    });
-    api("/content/options", { auth: false }).then(o => {
-      $("locations").innerHTML = o.locations.map(l => `<option value="${esc(l)}">`).join("");
-    }).catch(() => {});
+  } catch {
+    throw new Error("Cannot reach the server. Check your connection.");
+  }
+  if (res.status === 204) return null;
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    if (res.status === 401 && opts.auth !== false) logout();
+    throw new Error(errorText(data));
+  }
+  return data;
+}
+
+function logout() {
+  store.clear();
+  location.href = "index.html";
+}
+
+
+function requireRole(role) {
+  const user = store.user;
+  if (!store.token || !user || user.role !== role) {
+    location.href = "index.html";
+    return null;
+  }
+  document.querySelectorAll("[data-user]").forEach(el => (el.textContent = user.name));
+  document.querySelectorAll("[data-logout]").forEach(el => el.addEventListener("click", logout));
+  return user;
+}
+
+let toastTimer;
+function toast(message, kind = "ok") {
+  const el = document.getElementById("toast");
+  if (!el) return;
+  el.textContent = message;
+  el.className = "toast show" + (kind === "bad" ? " bad" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (el.className = "toast"), 3500);
+}
+
+
+async function run(action) {
+  try { return await action(); } catch (err) { toast(err.message, "bad"); }
+}
+
+const STATUS_CLASS = { Available: "ok", Accepted: "ok", Verified: "ok", Low: "warn", Pending: "warn", "Out of stock": "bad", Rejected: "bad" };
+const chip = text => `<span class="chip ${STATUS_CLASS[text] || "muted"}">${esc(text)}</span>`;
+const num = n => Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
+const money = n => (n == null ? "" : "RWF " + num(n));
+const fmtDate = s => new Date(s.endsWith("Z") ? s : s + "Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
