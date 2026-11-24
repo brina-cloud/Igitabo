@@ -1,15 +1,14 @@
-import os
-
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.staticfiles import StaticFiles
-
+from sqlalchemy.orm import Session
 from backend.app.config import settings
-from backend.app.database import Base, SessionLocal, engine
+from backend.app.database import Base, SessionLocal, engine, get_db
 from backend.app.models import schemas  # noqa: F401  (registers the tables)
 from backend.app.routers import admin, auth, content, listings, match
 from backend.app.routers import requests as requests_router
 from backend.app.seeds import seed_admin, seed_demo_data
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
 
 
 def create_app() -> FastAPI:
@@ -29,8 +28,9 @@ def create_app() -> FastAPI:
     app.include_router(requests_router.router)
 
     @app.get("/api/health", tags=["system"])
-    def health():
-        return {"status": "ok"}
+    def health(db: Session = Depends(get_db)):
+        db.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "connected"}
 
     if settings.FRONTEND_DIR.exists():
         app.mount("/", StaticFiles(directory=settings.FRONTEND_DIR, html=True), name="frontend")

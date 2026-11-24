@@ -5,6 +5,7 @@ import bcrypt
 import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.config import settings
@@ -36,22 +37,28 @@ def token_response(user: User) -> dict:
 
 
 def register_user(db: Session, data: RegisterIn) -> User:
-    if db.query(User).filter(User.email == data.email).first():
+    email = data.email.strip().lower()
+    if db.query(User).filter(User.email == email).first():
         raise HTTPException(409, "This email is already registered")
-    user = User(name=data.name.strip(), email=data.email, password_hash=hash_password(data.password), role=data.role)
+    user = User(name=data.name.strip(), email=email, password_hash=hash_password(data.password), role=data.role)
     db.add(user)
-    db.flush()  # gives user.id
-    if data.role == "cooperative":
-        db.add(Cooperative(user_id=user.id, location=data.location, phone=data.phone))
-    else:
-        db.add(Manufacturer(user_id=user.id, company_name=data.organisation or data.name,
-                            location=data.location, phone=data.phone))
-    db.commit()
+    try:
+        db.flush()  # gives user.id
+        if data.role == "cooperative":
+            db.add(Cooperative(user_id=user.id, location=data.location, phone=data.phone))
+        else:
+            db.add(Manufacturer(user_id=user.id, company_name=data.organisation or data.name,
+                                location=data.location, phone=data.phone))
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "This email is already registered")
     db.refresh(user)
     return user
 
 
 def authenticate(db: Session, email: str, password: str) -> User:
+    email = email.strip().lower()
     user = db.query(User).filter(User.email == email).first()
     if not user or not verify_password(password, user.password_hash):
         raise HTTPException(401, "Wrong email or password")
