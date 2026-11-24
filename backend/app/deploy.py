@@ -34,7 +34,7 @@ def create_app() -> FastAPI:
 
     if settings.FRONTEND_DIR.exists():
         app.mount("/", StaticFiles(directory=settings.FRONTEND_DIR, html=True), name="frontend")
-        return app
+    return app
 
 
 app = create_app()

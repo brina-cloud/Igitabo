@@ -21,7 +21,7 @@ class Settings:
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Changeme")
     SEED_DEMO = os.environ.get("SEED_DEMO", "0") == "1"
     PROJECT_DIR = Path(__file__).resolve().parents[2]
-    FRONTEND_DIR = PROJECT_DIR
+    FRONTEND_DIR = PROJECT_DIR / "frontend"
 settings = Settings()
 if os.environ.get("VERCEL") and settings.SECRET_KEY.startswith("dev-only"):
     raise RuntimeError("Set SECRET_KEY in the environment before deploying.")
