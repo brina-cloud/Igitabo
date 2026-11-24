@@ -21,5 +21,5 @@ class Settings:
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Changeme")
     SEED_DEMO = os.environ.get("SEED_DEMO", "1") == "1"
     PROJECT_DIR = Path(__file__).resolve().parents[2]
-
+    FRONTEND_DIR = PROJECT_DIR
 settings = Settings()
