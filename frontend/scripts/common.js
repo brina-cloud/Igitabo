@@ -56,7 +56,6 @@ function logout() {
   location.href = "index.html";
 }
 
-
 function requireRole(role) {
   const user = store.user;
   if (!store.token || !user || user.role !== role) {
@@ -78,7 +77,6 @@ function toast(message, kind = "ok") {
   toastTimer = setTimeout(() => (el.className = "toast"), 3500);
 }
 
-
 async function run(action) {
   try { return await action(); } catch (err) { toast(err.message, "bad"); }
 }
@@ -88,3 +86,23 @@ const chip = text => `<span class="chip ${STATUS_CLASS[text] || "muted"}">${esc(
 const num = n => Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
 const money = n => (n == null ? "" : "RWF " + num(n));
 const fmtDate = s => new Date(s.endsWith("Z") ? s : s + "Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
+
+function initials(name) {
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}
+
+function renderProfileHead(me, roleLabel) {
+  const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  set("avatar", initials(me.name));
+  set("p-name", me.name);
+  set("p-email", me.email);
+  set("p-role", roleLabel);
+}
+
+function setStat(id, n) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = num(n);
+}
