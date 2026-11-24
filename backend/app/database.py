@@ -1,23 +1,9 @@
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from backend.app.config import settings
 
-is_sqlite = settings.DATABASE_NEW_URL.startswith("sqlite")
-connect_args = {"check_same_thread": False} if is_sqlite else {}
-engine_options = {
-    "connect_args": connect_args,
-    "pool_pre_ping": True,
-}
-if not is_sqlite:
-    engine_options.update({
-        "pool_size": 5,
-        "max_overflow": 10,
-        "pool_recycle": 300,
-    })
-
-engine = create_engine(settings.DATABASE_URL, **engine_options)
+engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
@@ -28,4 +14,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
